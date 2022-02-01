@@ -15,7 +15,10 @@ ws.onmessage = (msg) => {
     console.log("got", msg);
 }
 
-const manualGetTop3 = () => {
+const manualGetTop3 = async () => {
     // implement me
     console.log("manual call");
+    const results = await (await fetch("/task")).json();
+    console.log(results)
+
 }
