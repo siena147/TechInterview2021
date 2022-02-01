@@ -1,24 +1,37 @@
-const action = function() {
-    // implement me : add js to fit the requirements
-    console.log("implement me");
-    
-    ws && ws.send("task");
-    manualGetTop3();
-}
+let ws = null;
+let startDate = Date.now();
 
-const ws = new WebSocket('ws://localhost:8081');
-ws.onopen = (evt) => {
-    console.log("ws open", evt);
-};
-ws.onmessage = (msg) => {
-    // implement me
-    console.log("got", msg);
-}
 
-const manualGetTop3 = async () => {
-    // implement me
-    console.log("manual call");
-    const results = await (await fetch("/task")).json();
-    console.log(results)
+const connect = () => {
+    ws = new WebSocket('ws://localhost:8081');
+    ws.onmessage = (msg) => {
+        const reviews = JSON.parse(msg.data);
+        for (let top3Revews of reviews) {
+            document.querySelector(".top3history").innerHTML += document.querySelector(".currentTop3").innerHTML
+            document.querySelector(".currentTop3").innerHTML = getReviewsTxt(top3Revews.reviews)
+        }
+    }
+    ws.onclose = () =>
+        setTimeout(connect, 1000)
+
+    ws.onopen = () => {
+        ws.send(startDate);
+    }
+
+}
+connect();
+
+
+const getReviewsTxt = (reviews) => {
+    let txt = '';
+    for (let review of reviews)
+        txt += `
+        <div class="review">
+            <h2>${review.name} on ${new Date(review.date)}</h2>
+            <h3>${review.body}</h3>
+        </div>
+        <hr/>
+        `
+    return txt;
 
 }

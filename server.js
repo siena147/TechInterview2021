@@ -88,14 +88,14 @@ class Cache {
     this.data = []
   }
   getCache(date = Date.now()) {
-    const cacheDate = this.data.find(d => date - d.date <= 1000 * 15)
-    if (cacheDate){
+    const cacheDate = this.data.filter(d => d.date < date)
+    if (cacheDate.length != 0) {
       return cacheDate;
     }
     else {
       const reviews = data.top3().top3Reviews
       this.data.push({ date, reviews })
-      return reviews;
+      return [{ date, reviews }];
     }
   }
 
@@ -106,20 +106,21 @@ const cache = new Cache();
 const DataSet = require('./dataset.js');
 const data = new DataSet();
 
-webSocketServer && webSocketServer.on('connection', function connection(wSocket) {
-  wSocket.on('message', function incoming(message) {
-    // implement me
-    // return cached data
+webSocketServer && webSocketServer.on('connection', (wSocket) => {
+  let interval = null;
+  wSocket.on("message", (date) => {
+    wSocket.send(JSON.stringify(cache.getCache(new Date(parseInt(date)))));
+    interval = setInterval(() => {
+      wSocket.send(JSON.stringify(cache.getCache(new Date(parseInt(date)))));
+    }, 30000);
+  })
 
-    if (message === "task") {
-      wSocket.send(JSON.stringify(cache.getCache()));
-    } else {
-      console.log('received: %s', message);
-      wSocket.send("i got the message already... stahp, get some help...");
-    }
-  });
 
-  wSocket.send('connected');
+
+  wSocket.onclose = () => {
+    if (interval)
+      clearInterval(interval)
+  }
 });
 
 routes['task'] = (route, req, res) => {
